@@ -38,7 +38,6 @@ export default function Home() {
     const reader = data.getReader();
     await streamReader(reader, (message) => {
       setIncomingMessage((prev) => `${prev}${message.content}`);
-      console.log(message);
     });
   }
 
