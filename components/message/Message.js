@@ -3,6 +3,7 @@ import Image from "next/image";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRobot } from "@fortawesome/free-solid-svg-icons";
+import { ReactMarkdown } from "react-markdown/lib/react-markdown";
 
 export default function Message({ role, content }) {
   const { user } = useUser();
@@ -10,26 +11,32 @@ export default function Message({ role, content }) {
   return (
     <div
       className={`grid grid-cols-[30px_1fr] gap-5 p-5 ${
-        role === "assistant" ? "bg-gray-600" : ""
+        role === "assistant"
+          ? "bg-gray-600"
+          : role === "notice"
+          ? "bg-red-600"
+          : ""
       }`}
     >
       <div>
-        {user && role === "user" && (
+        {role === "user" && !!user && (
           <Image
             src={user.picture}
             width={30}
             height={30}
-            alt="user avatar"
-            className="shadow-black/500 rounded-sm shadow-md"
+            alt="User avatar"
+            className="rounded-sm shadow-md shadow-black/50"
           />
         )}
         {role === "assistant" && (
-          <div className="item-center shadow-black/500 flex h-[30px] w-[30px] justify-center rounded-sm bg-gray-800 shadow-md">
+          <div className="flex h-[30px] w-[30px] items-center justify-center rounded-sm bg-gray-800 shadow-md shadow-black/50">
             <FontAwesomeIcon icon={faRobot} className="text-emerald-200" />
           </div>
         )}
       </div>
-      <div>{content}</div>
+      <div className="prose prose-invert">
+        <ReactMarkdown>{content}</ReactMarkdown>
+      </div>
     </div>
   );
 }

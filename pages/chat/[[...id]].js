@@ -11,9 +11,11 @@ export default function Home() {
   const [incomingMessage, setIncomingMessage] = useState("");
   const [messageText, setMessageText] = useState("");
   const [newChatMessages, setNewChatMessages] = useState([]);
+  const [generatingResponse, setGeneratingResponse] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setGeneratingResponse(true);
 
     setNewChatMessages((prev) => [
       ...prev,
@@ -23,6 +25,7 @@ export default function Home() {
         content: messageText,
       },
     ]);
+    setMessageText("");
 
     const response = await fetch("/api/chat/sendMessage", {
       method: "POST",
@@ -39,6 +42,7 @@ export default function Home() {
     await streamReader(reader, (message) => {
       setIncomingMessage((prev) => `${prev}${message.content}`);
     });
+    setGeneratingResponse(false);
   }
 
   return (
@@ -48,8 +52,8 @@ export default function Home() {
       </Head>
       <div className="grid h-screen grid-cols-[260px_1fr]">
         <ChatSideBar />
-        <div className="flex flex-col bg-gray-700">
-          <div className="flex-1 text-white">
+        <div className="flex flex-col overflow-hidden bg-gray-700">
+          <div className="flex-1 overflow-y-scroll text-white">
             {newChatMessages.map((message) => (
               <Message
                 key={message._id}
@@ -62,11 +66,12 @@ export default function Home() {
             )}
           </div>
           <footer className="bg-gray-800 p-10">
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} disabled={generatingResponse}>
               <fieldset className="flex gap-2">
                 <textarea
+                  value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
-                  placeholder="Send a message..."
+                  placeholder={generatingResponse ? "" : "Send a message..."}
                   className="w-full resize-none rounded-md bg-gray-700 p-2 text-white focus:border-emerald-500 focus:bg-gray-600 focus:outline focus:outline-emerald-500"
                 />
                 <button type="submit" className="btn">
