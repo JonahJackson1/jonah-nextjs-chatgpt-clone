@@ -30,7 +30,6 @@ export default async function sendMessage(req) {
 
     const chatId = json._id;
 
-    console.log("/started");
     const stream = await OpenAIEdgeStream(
       "https://api.openai.com/v1/chat/completions",
       {
@@ -50,21 +49,25 @@ export default async function sendMessage(req) {
           emit(chatId, "newChatId");
         },
         onAfterStream: async ({ fullContent }) => {
-          await fetch(
-            `${req.headers.get("origin")}/api/chat/addMessageToChat`,
-            {
-              method: "POST",
-              headers: {
-                "content=type": "application/json",
-                cookie: req.headers.get("cookie"),
-              },
-              body: JSON.stringify({
-                chatId,
-                role: "assistant",
-                content: fullContent,
-              }),
-            }
-          );
+          try {
+            await fetch(
+              `${req.headers.get("origin")}/api/chat/addMessageToChat`,
+              {
+                method: "POST",
+                headers: {
+                  "content-type": "application/json",
+                  cookie: req.headers.get("cookie"),
+                },
+                body: JSON.stringify({
+                  chatId,
+                  role: "assistant",
+                  content: fullContent,
+                }),
+              }
+            );
+          } catch (err) {
+            console.log(err);
+          }
         },
       }
     );

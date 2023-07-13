@@ -7,8 +7,12 @@ import { v4 as uuid } from "uuid";
 import ChatSideBar from "components/sidebar/ChatSideBar";
 import Message from "components/message/Message";
 import { useRouter } from "next/router";
+import { getSession } from "@auth0/nextjs-auth0";
+import clientPromise from "lib/mongodb";
+import { ObjectId } from "mongodb";
 
-export default function ChatPage() {
+export default function ChatPage({ id, title, messages }) {
+  console.log(title, messages);
   const [newChatId, setNewChatId] = useState(null);
   const [incomingMessage, setIncomingMessage] = useState("");
   const [messageText, setMessageText] = useState("");
@@ -63,7 +67,7 @@ export default function ChatPage() {
         <title>New chat</title>
       </Head>
       <div className="grid h-screen grid-cols-[260px_1fr]">
-        <ChatSideBar />
+        <ChatSideBar id={id} />
         <div className="flex flex-col overflow-hidden bg-gray-700">
           <div className="flex-1 overflow-y-scroll text-white">
             {newChatMessages.map((message) => (
@@ -96,4 +100,27 @@ export default function ChatPage() {
       </div>
     </>
   );
+}
+
+export async function getServerSideProps(context) {
+  const id = context.params?.id?.[0] || null;
+  if (id) {
+    const { user } = await getSession(context.req, context.res);
+    const client = await clientPromise;
+    const db = client.db("ChatGPTClone");
+    const chat = await db.collection("chats").findOne({
+      _id: new ObjectId(id),
+      userId: user.sub,
+    });
+    return {
+      props: {
+        id,
+        title: chat.title,
+        messages: chat.messages.map((msg) => ({ ...msg, _id: uuid() })),
+      },
+    };
+  }
+  return {
+    props: { id: id },
+  };
 }

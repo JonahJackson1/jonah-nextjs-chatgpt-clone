@@ -1,15 +1,13 @@
 import { getSession } from "@auth0/nextjs-auth0";
 import clientPromise from "lib/mongodb";
+import { ObjectId } from "mongodb";
 
 export default async function addMessageToChat(req, res) {
   try {
-    const { user } = await getSession();
+    const { user } = await getSession(req, res);
     const client = await clientPromise;
     const db = client.db("ChatGPTClone");
-
     const { chatId, role, content } = req.body;
-    console.log(chatId, role, content);
-
     const chat = await db.collection("chats").findOneAndUpdate(
       {
         _id: new ObjectId(chatId),
@@ -27,8 +25,6 @@ export default async function addMessageToChat(req, res) {
         returnDocument: "after",
       }
     );
-
-    console.log("HERE123");
 
     res.status(200).json({
       chat: {
