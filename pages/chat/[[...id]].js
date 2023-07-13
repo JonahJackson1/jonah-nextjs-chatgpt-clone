@@ -11,15 +11,36 @@ import { getSession } from "@auth0/nextjs-auth0";
 import clientPromise from "lib/mongodb";
 import { ObjectId } from "mongodb";
 
-export default function ChatPage({ id, title, messages }) {
-  console.log(title, messages);
+export default function ChatPage({ id, title, messages = [] }) {
   const [newChatId, setNewChatId] = useState(null);
   const [incomingMessage, setIncomingMessage] = useState("");
   const [messageText, setMessageText] = useState("");
   const [newChatMessages, setNewChatMessages] = useState([]);
   const [generatingResponse, setGeneratingResponse] = useState(false);
+  const [fullMsg, setFullMsg] = useState("");
   const router = useRouter();
 
+  // when route changes reset state
+  useEffect(() => {
+    setNewChatMessages([]);
+    setNewChatId(null);
+  }, [id]);
+
+  // save new messages to chat messages
+  useEffect(() => {
+    if (!generatingResponse && fullMsg)
+      setNewChatMessages((prev) => [
+        ...prev,
+        {
+          _id: uuid(),
+          role: "assistant",
+          content: fullMsg,
+        },
+      ]);
+    setFullMsg("");
+  }, [generatingResponse, fullMsg]);
+
+  // if new chat
   useEffect(() => {
     if (!generatingResponse && newChatId) {
       setNewChatId(null);
@@ -46,20 +67,28 @@ export default function ChatPage({ id, title, messages }) {
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify({ message: messageText }),
+      body: JSON.stringify({ chatId: id, message: messageText }),
     });
 
     const data = response.body;
     if (!data) return;
 
     const reader = data.getReader();
+    let content = "";
     await streamReader(reader, (message) => {
       if (message.event === "newChatId") {
         setNewChatId(message.content);
-      } else setIncomingMessage((prev) => `${prev}${message.content}`);
+      } else {
+        setIncomingMessage((prev) => `${prev}${message.content}`);
+        content = content + message.content;
+      }
     });
+    setFullMsg(content);
+    setIncomingMessage("");
     setGeneratingResponse(false);
   }
+
+  const allMessages = [...messages, ...newChatMessages];
 
   return (
     <>
@@ -70,7 +99,7 @@ export default function ChatPage({ id, title, messages }) {
         <ChatSideBar id={id} />
         <div className="flex flex-col overflow-hidden bg-gray-700">
           <div className="flex-1 overflow-y-scroll text-white">
-            {newChatMessages.map((message) => (
+            {allMessages.map((message) => (
               <Message
                 key={message._id}
                 role={message.role}

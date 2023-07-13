@@ -43,7 +43,12 @@ export default function ChatSideBar({ id }) {
               title={chat.title}
               className="overflow-hidden text-ellipsis whitespace-nowrap"
             >
-              {chat.title}
+              <span
+                title={chat.title}
+                className="overflow-hidden text-ellipsis whitespace-nowrap"
+              >
+                {chat.title}
+              </span>
             </span>
           </Link>
         ))}
