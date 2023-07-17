@@ -163,13 +163,34 @@ export default function ChatPage({ id, title, messages = [] }) {
 export async function getServerSideProps(context) {
   const id = context.params?.id?.[0] || null;
   if (id) {
+    let objectId;
+    
+    try {
+      objectId = new ObjectId(id);
+    } catch (e) {
+      return {
+        redirect: {
+          destination: "/chat",
+        },
+      };
+    }
+
     const { user } = await getSession(context.req, context.res);
     const client = await clientPromise;
     const db = client.db("ChatGPTClone");
     const chat = await db.collection("chats").findOne({
-      _id: new ObjectId(id),
+      _id: objectId,
       userId: user.sub,
     });
+
+    if (!chat) {
+      return {
+        redirect: {
+          destination: "/chat",
+        },
+      };
+    }
+
     return {
       props: {
         id,

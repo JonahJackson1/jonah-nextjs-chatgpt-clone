@@ -8,9 +8,42 @@ export default async function addMessageToChat(req, res) {
     const client = await clientPromise;
     const db = client.db("ChatGPTClone");
     const { chatId, role, content } = req.body;
+
+    // validate objectId
+    let objectId;
+
+    try {
+      objectId = new ObjectId(chatId);
+    } catch (e) {
+      res.status(422).json({ message: "invalid chat ID" });
+      return;
+    }
+
+    // validate message data
+    if (
+      !content ||
+      typeof content !== "string" ||
+      (role === "user" && content.length > 200) ||
+      (role === "assistant" && content.length > 100_000)
+    ) {
+      res.status(422).json({
+        message: "Content is required and must be less than 200 characters",
+      });
+      return;
+    }
+
+    // validate role
+
+    if (role !== "user" && role !== "assistant") {
+      res.status(422).json({
+        message: 'role must either be "assistant" or "user"',
+      });
+      return;
+    }
+
     const chat = await db.collection("chats").findOneAndUpdate(
       {
-        _id: new ObjectId(chatId),
+        _id: new ObjectId(objectId),
         userId: user.sub,
       },
       {
