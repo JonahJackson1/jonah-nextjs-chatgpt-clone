@@ -25,9 +25,9 @@ export default function ChatSideBar({ id }) {
     <div className="flex flex-col overflow-hidden bg-gray-900 text-white">
       <Link
         href="/chat"
-        className="side-menu-item bg-emerald-500 text-sm hover:bg-emerald-600"
+        className="side-menu-item bg-emerald-500 text-sm hover:bg-emerald-600 "
       >
-        <FontAwesomeIcon icon={faPlus} /> New chat
+        <FontAwesomeIcon icon={faPlus} className="text-white/50" /> New chat
       </Link>
       <div className="flex-1 overflow-auto bg-gray-950">
         {chatList.map((chat) => (

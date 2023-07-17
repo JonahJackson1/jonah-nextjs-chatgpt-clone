@@ -10,6 +10,8 @@ import { useRouter } from "next/router";
 import { getSession } from "@auth0/nextjs-auth0";
 import clientPromise from "lib/mongodb";
 import { ObjectId } from "mongodb";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faRobot } from "@fortawesome/free-solid-svg-icons";
 
 export default function ChatPage({ id, title, messages = [] }) {
   const [newChatId, setNewChatId] = useState(null);
@@ -18,12 +20,16 @@ export default function ChatPage({ id, title, messages = [] }) {
   const [newChatMessages, setNewChatMessages] = useState([]);
   const [generatingResponse, setGeneratingResponse] = useState(false);
   const [fullMsg, setFullMsg] = useState("");
+  const [originalChatId, setOriginalChatId] = useState(id);
   const router = useRouter();
+
+  const routeHasChanged = id !== originalChatId;
 
   // when route changes reset state
   useEffect(() => {
     setNewChatMessages([]);
     setNewChatId(null);
+    if (!incomingMessage && originalChatId !== id) setOriginalChatId(id);
   }, [id]);
 
   // save new messages to chat messages
@@ -98,16 +104,39 @@ export default function ChatPage({ id, title, messages = [] }) {
       <div className="grid h-screen grid-cols-[260px_1fr]">
         <ChatSideBar id={id} />
         <div className="flex flex-col overflow-hidden bg-gray-700">
-          <div className="flex-1 overflow-y-scroll text-white">
-            {allMessages.map((message) => (
-              <Message
-                key={message._id}
-                role={message.role}
-                content={message.content}
-              />
-            ))}
-            {incomingMessage && (
-              <Message role="assistant" content={incomingMessage} />
+          <div className="flex flex-1 flex-col-reverse overflow-y-scroll text-white">
+            {!allMessages.length && !incomingMessage && (
+              <div className="m-auto flex items-center justify-center text-center">
+                <div>
+                  <FontAwesomeIcon
+                    icon={faRobot}
+                    className="text-6xl text-emerald-200"
+                  />
+                  <h1 className="mt-2 text-4xl font-bold text-white/50">
+                    Ask me a question!
+                  </h1>
+                </div>
+              </div>
+            )}
+            {!!allMessages.length && (
+              <div className="mb-auto">
+                {allMessages.map((message) => (
+                  <Message
+                    key={message._id}
+                    role={message.role}
+                    content={message.content}
+                  />
+                ))}
+                {!!incomingMessage && !routeHasChanged && (
+                  <Message role="assistant" content={incomingMessage} />
+                )}
+                {!!incomingMessage && !!routeHasChanged && (
+                  <Message
+                    role="notice"
+                    content="Only one message at a time. Please allow any other responses to complete before sending another message."
+                  />
+                )}
+              </div>
             )}
           </div>
           <footer className="bg-gray-800 p-10">

@@ -15,11 +15,13 @@ const outfit = Outfit({
 function App({ Component, pageProps }) {
   return (
     <>
-      <Head>
-        <link rel="icon" href="/favicon.png" />
-      </Head>
       <UserProvider>
-        <Component {...pageProps} />
+        <Head>
+          <link rel="icon" href="/favicon.png" />
+        </Head>
+        <main className={`${outfit.variable} font-body`}>
+          <Component {...pageProps} />
+        </main>
       </UserProvider>
     </>
   );
